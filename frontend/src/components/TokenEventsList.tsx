@@ -669,7 +669,15 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
     localStorage.setItem(DYNAMIC_SCALING_KEY, isDynamicScaling().toString());
   });
 
-  const [viewMode, setViewMode] = createSignal<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = createSignal<'list' | 'grid' | 'chart'>('list');
+  const [isMobile, setIsMobile] = createSignal(window.innerWidth < 768);
+
+  // Add resize handler
+  onMount(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    onCleanup(() => window.removeEventListener('resize', handleResize));
+  });
 
   return (
     <div class="min-h-full">
@@ -758,6 +766,13 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                   title="Grid View"
                 >
                   <LayoutGrid size={20} class="text-white" />
+                </button>
+                <button
+                  onClick={() => setViewMode('chart')}
+                  class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'chart' ? 'bg-gray-700/50' : ''}`}
+                  title="Chart View"
+                >
+                  <LineChart size={20} class="text-white" />
                 </button>
               </div>
             </div>
@@ -876,7 +891,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                       <TokenEventCard
                         token={token}
                         expanded={true}
-                        onToggleExpand={(e) => handleTokenClick(token.tokenAddress, e)}
+                        onToggleExpand={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                         trends={tokenTrends().get(token.tokenAddress)}
                         dynamicScaling={isDynamicScaling()}
                       />
@@ -887,7 +902,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                 );
               })}
             </div>
-          ) : (
+          ) : viewMode() === 'grid' ? (
             // Grid View
             <div class="relative">
               {expandedTokens().size > 0 ? (
@@ -904,7 +919,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                         <TokenEventCard
                           token={token}
                           expanded={true}
-                          onToggleExpand={(e) => handleTokenClick(token.tokenAddress, e)}
+                          onToggleExpand={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                           trends={tokenTrends().get(token.tokenAddress)}
                           dynamicScaling={isDynamicScaling()}
                         />
@@ -922,13 +937,34 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                     >
                       <TokenTileCard
                         token={token}
-                        onClick={(e) => handleTokenClick(token.tokenAddress, e)}
+                        onClick={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                         trends={tokenTrends().get(token.tokenAddress)}
                       />
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+          ) : (
+            // Chart View
+            <div class="h-[calc(100vh-200px)]">
+              {filteredTokens().map((token, index) => (
+                <div
+                  data-index={index}
+                  ref={(el) => virtualizer()?.measureElement(el)}
+                  class={`${
+                    index % 2 === 0 ? 'bg-black/20' : 'bg-black/10'
+                  } transition-colors hover:bg-black/30`}
+                >
+                  <TokenEventCard
+                    token={token}
+                    expanded={expandedTokens().has(token.tokenAddress)}
+                    onToggleExpand={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
+                    trends={tokenTrends().get(token.tokenAddress)}
+                    dynamicScaling={isDynamicScaling()}
+                  />
+                </div>
+              ))}
             </div>
           )}
         </div>

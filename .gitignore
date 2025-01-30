@@ -3,7 +3,7 @@ node_modules/
 /vendor/
 
 # Environment files
-
+.env
 
 # Build outputs
 /dist/
