@@ -2,8 +2,10 @@ import { Component, createSignal, createEffect, onCleanup, Show } from 'solid-js
 import { createStore, produce } from 'solid-js/store';
 import { TokenEventsList } from './components/TokenEventsList';
 import { LiveStatusBar } from './components/LiveStatusBar';
+import { BuyProfilesWidget } from './components/BuyProfilesWidget';
 import type { Token, PerformanceMetrics, ThemeColors, WSMessage } from './types';
 import FlexSearch from 'flexsearch';
+import { useMobileDetect } from './hooks/useMobileDetect';
 
 // Initialize WebSocket worker
 const wsWorker = new Worker(
@@ -60,6 +62,8 @@ const App: Component = () => {
       store: true
     }
   });
+  
+  const isMobile = useMobileDetect();
   
   // WebSocket worker message handling
   createEffect(() => {
@@ -171,47 +175,57 @@ const App: Component = () => {
       class="min-h-screen flex flex-col overflow-hidden"
       style={{
         'background-color': bgColor(),
-        'background-attachment': 'fixed'
+        'background-attachment': 'fixed',
+        'padding-top': 'env(safe-area-inset-top)',
+        'padding-bottom': 'env(safe-area-inset-bottom)'
       }}
     >
-      <LiveStatusBar
-        isConnected={isConnected()}
-        isLoading={isLoading()}
-        error={connectionError()}
-        metrics={performanceMetrics()}
-        onBgColorChange={setBgColor}
-        onResetBgColor={resetBgColor}
-        currentBgColor={bgColor()}
-      />
+      <div class="px-2 sm:px-4">
+        <LiveStatusBar
+          isConnected={isConnected()}
+          isLoading={isLoading()}
+          error={connectionError()}
+          metrics={performanceMetrics()}
+          onBgColorChange={setBgColor}
+          onResetBgColor={resetBgColor}
+          currentBgColor={bgColor()}
+        />
+      </div>
       
-      <main class="flex-1 overflow-auto relative w-full pt-[56px]">
-        <Show
-          when={!isLoading() && hasReceivedInitialTokens()}
-          fallback={
-            <div class="flex items-center justify-center h-[50vh]">
-              <div class="text-white text-xl">Loading tokens...</div>
+      <main class="flex-1 overflow-auto relative w-full pt-[56px] xs:pt-[64px]">
+        <div class="flex">
+          {/* Left sidebar area with responsive padding */}
+          <Show when={!isMobile()}>
+            <div class="w-[350px] flex justify-center px-4">
+              <BuyProfilesWidget />
             </div>
-          }
-        >
-          <TokenEventsList
-            tokens={Object.values(tokens.items)}
-            onColorsChange={setColors}
-          />
-        </Show>
+          </Show>
+          
+          {/* Main content area */}
+          <div class="flex-1">
+            <Show
+              when={!isLoading() && hasReceivedInitialTokens()}
+              fallback={
+                <div class="flex items-center justify-center h-full">
+                  <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500" />
+                </div>
+              }
+            >
+              <TokenEventsList
+                tokens={Object.values(tokens.items)}
+                onColorsChange={setColors}
+              />
+            </Show>
+          </div>
+        </div>
       </main>
       
       {/* Debug panel in development */}
       {import.meta.env.DEV && (
-        <div class="fixed bottom-4 right-4 bg-black/80 text-white p-4 rd-lg text-sm font-mono z-50">
-          <h3 class="fw-700 mb-2">Performance Metrics</h3>
-          <div>FPS: {performanceMetrics().fps.toFixed(1)}</div>
-          <div>Memory: {performanceMetrics().memory.toFixed(1)} MB</div>
-          <div>Tokens: {Object.keys(tokens.items).length}</div>
-          <div>Connection: {isConnected() ? 'Connected' : 'Disconnected'}</div>
-          <div>Initial Tokens: {hasReceivedInitialTokens() ? 'Yes' : 'No'}</div>
-          <Show when={connectionError()}>
-            <div class="text-red-400 mt-2">Error: {connectionError()}</div>
-          </Show>
+        <div class="fixed bottom-20 right-4 bg-black/80 p-2 rd z-50">
+          <div class="text-xs text-white">
+            {isMobile() ? 'Mobile View' : 'Desktop View'}
+          </div>
         </div>
       )}
     </div>
