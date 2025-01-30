@@ -3,6 +3,7 @@ import { Shield, Info, Activity, FileText, Lock, Users, ChevronUp, ChevronDown, 
 import type { Token, TokenHistory } from '../types';
 import { TokenChart } from './TokenLiquidityChart';
 import { TrendBadge } from './TrendBadge';
+import { TokenPrice } from './TokenPrice';
 
 const securityStatus = {
   safe: 'bg-green-100 text-green-800 border border-green-200',
@@ -249,6 +250,7 @@ export const TokenEventCard: Component<TokenCardProps> = (props) => {
                   <div class="flex items-center gap-2">
                     <h3 class="text-sm fw-600">{props.token.tokenName}</h3>
                     <span class="text-xs text-gray-400">{props.token.tokenSymbol}</span>
+                    <TokenPrice token={props.token} showBothFormats={true} />
                     <div class="flex gap-1">
                       <TrendBadge 
                         trend={props.trends?.liquidity || 'stagnant'} 
@@ -325,6 +327,7 @@ export const TokenEventCard: Component<TokenCardProps> = (props) => {
                     <div class="flex items-center gap-2">
                       <h3 class="text-sm fw-600">{props.token.tokenName}</h3>
                       <span class="text-xs text-gray-400">{props.token.tokenSymbol}</span>
+                      <TokenPrice token={props.token} showBothFormats={true} />
                       <div class="flex gap-1">
                         <TrendBadge 
                           trend={props.trends?.liquidity || 'stagnant'} 

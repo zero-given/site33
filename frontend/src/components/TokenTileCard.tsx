@@ -2,6 +2,8 @@ import { Component } from 'solid-js';
 import { Shield, Lock, Key, Info } from 'lucide-solid';
 import type { Token } from '../types';
 import { TrendBadge } from './TrendBadge';
+import { TokenPrice } from './TokenPrice';
+import { MiniChart } from './MiniChart';
 
 interface TokenTileCardProps {
   token: Token;
@@ -10,6 +12,7 @@ interface TokenTileCardProps {
     liquidity: 'up' | 'down' | 'stagnant';
     holders: 'up' | 'down' | 'stagnant';
   };
+  history?: any[];
 }
 
 const securityStatus = {
@@ -82,15 +85,29 @@ export const TokenTileCard: Component<TokenTileCardProps> = (props) => {
 
         {/* Key metrics in 4 columns */}
         <div class="grid grid-cols-4 gap-4 text-sm">
-          {/* Column 1: Holders and Liquidity */}
-          <div class="space-y-2">
+          {/* Column 1: Holders and Liquidity with Mini Charts */}
+          <div class="space-y-4">
             <div>
-              <p class="text-gray-400">Holders</p>
-              <p class="text-white fw-600">{formatNumber(props.token.gpHolderCount)}</p>
+              <p class="text-gray-400 mb-1">Holders</p>
+              <p class="text-white fw-600 mb-1">{formatNumber(props.token.gpHolderCount)}</p>
+              {props.history && (
+                <MiniChart
+                  token={props.token}
+                  history={props.history}
+                  type="holders"
+                />
+              )}
             </div>
             <div>
-              <p class="text-gray-400">Liquidity</p>
-              <p class="text-white fw-600">${formatNumber(props.token.hpLiquidityAmount)}</p>
+              <p class="text-gray-400 mb-1">Liquidity</p>
+              <p class="text-white fw-600 mb-1">${formatNumber(props.token.hpLiquidityAmount)}</p>
+              {props.history && (
+                <MiniChart
+                  token={props.token}
+                  history={props.history}
+                  type="liquidity"
+                />
+              )}
             </div>
           </div>
 
@@ -126,7 +143,12 @@ export const TokenTileCard: Component<TokenTileCardProps> = (props) => {
             </div>
           </div>
 
-          {/* Column 3: Buy and Sell Tax */}
+          {/* Column 3: Price */}
+          <div class="space-y-2">
+            <TokenPrice token={props.token} class="!text-base" showBothFormats={true} />
+          </div>
+
+          {/* Column 4: Buy and Sell Tax */}
           <div class="space-y-2">
             <div>
               <p class="text-gray-400">Buy Tax</p>
@@ -136,18 +158,6 @@ export const TokenTileCard: Component<TokenTileCardProps> = (props) => {
               <p class="text-gray-400">Sell Tax</p>
               <p class="text-white fw-600">{props.token.gpSellTax}%</p>
             </div>
-          </div>
-
-          {/* Column 4: Trend Badges */}
-          <div class="flex flex-col justify-center items-end gap-2">
-            <TrendBadge 
-              trend={props.trends?.liquidity || 'stagnant'} 
-              type="Liq" 
-            />
-            <TrendBadge 
-              trend={props.trends?.holders || 'stagnant'} 
-              type="Holders" 
-            />
           </div>
         </div>
 

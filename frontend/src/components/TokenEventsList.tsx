@@ -5,6 +5,7 @@ import { TokenTileCard } from './TokenTileCard';
 import { Layout, List, LineChart, Activity, LayoutGrid } from 'lucide-solid';
 import { TrendBadge } from './TrendBadge';
 import type { Token, FilterState, ThemeColors } from '../types';
+import { TokenPrice } from './TokenPrice';
 
 interface TokenEventsListProps {
   tokens: Token[];
@@ -455,7 +456,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
     return (
       <div 
         onClick={(e) => handleTokenClick(props.token.tokenAddress, e)}
-        class="w-full bg-black/20 backdrop-blur-sm rd-lg border border-gray-700/50 hover:border-gray-600/50 transition-all duration-200 p-4 grid grid-cols-12 gap-4 items-center text-white cursor-pointer"
+        class="w-full bg-black/20 backdrop-blur-sm rd-lg border border-gray-700/50 hover:border-gray-600/50 transition-all duration-200 px-4 py-3 grid grid-cols-12 gap-6 items-center text-white cursor-pointer relative"
       >
         {/* Name and Symbol */}
         <div class="col-span-2">
@@ -466,21 +467,17 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
         </div>
 
         {/* Status Badges and Trends */}
-        <div class="col-span-3 flex items-center">
-          {/* Fixed width container for ownership badge */}
-          <div class="w-28 flex justify-center">
-            <div class={`shrink-0 px-2 py-0.5 rd text-xs ${
+        <div class="col-span-2 flex items-center gap-3">
+          {/* Badges */}
+          <div class="flex flex-col gap-1">
+            <div class={`px-2 py-0.5 rd text-xs text-center ${
               props.token.gpOwnerAddress === '0x0000000000000000000000000000000000000000'
                 ? 'bg-green-500/20 text-green-300 border border-green-500/30'
                 : 'bg-red-500/20 text-red-300 border border-red-500/30'
             }`}>
               {props.token.gpOwnerAddress === '0x0000000000000000000000000000000000000000' ? 'Renounced' : 'Owned'}
             </div>
-          </div>
-
-          {/* Fixed width container for liquidity lock badge */}
-          <div class="w-36 flex justify-center">
-            <div class={`shrink-0 px-2 py-0.5 rd text-xs min-w-[120px] whitespace-nowrap text-center ${(() => {
+            <div class={`px-2 py-0.5 rd text-xs text-center ${(() => {
               try {
                 const lpHolders = JSON.parse(props.token.gpLpHolders || '[]');
                 const totalLocked = lpHolders.reduce((acc: number, holder: any) => 
@@ -507,25 +504,23 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
             </div>
           </div>
 
-          {/* Fixed width container for trend badges */}
-          <div class="flex-1 flex justify-end pr-2">
-            <div class="flex shrink-0 items-center gap-1">
-              <TrendBadge 
-                trend={trends().liquidity} 
-                type="Liq" 
-              />
-              <TrendBadge 
-                trend={trends().holders} 
-                type="Holders" 
-              />
-            </div>
+          {/* Trend badges */}
+          <div class="flex items-center gap-1">
+            <TrendBadge 
+              trend={trends().liquidity} 
+              type="Liq" 
+            />
+            <TrendBadge 
+              trend={trends().holders} 
+              type="Holders" 
+            />
           </div>
         </div>
 
         {/* Age */}
-        <div class="col-span-1 flex flex-col">
+        <div class="col-span-1">
           <div class="text-xs text-gray-400">Age</div>
-          <div class="px-2 py-0.5 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 inline-block mt-1">
+          <div class="px-1.5 py-0.5 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 inline-block mt-1 w-[60px] text-center whitespace-nowrap">
             {(() => {
               const totalMinutes = Math.round(props.token.tokenAgeHours * 60);
               const hours = Math.floor(totalMinutes / 60);
@@ -538,27 +533,38 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
           </div>
         </div>
 
-        {/* Other Info */}
-        <div class="col-span-1 flex flex-col">
+        {/* Price */}
+        <div class="col-span-2">
+          <TokenPrice token={props.token} showBothFormats={true} class="mt-1" />
+        </div>
+
+        {/* Liquidity */}
+        <div class="col-span-2">
           <div class="text-xs text-gray-400">Liquidity</div>
           <div class="text-sm mt-1">${props.token.hpLiquidityAmount.toLocaleString()}</div>
         </div>
-        <div class="col-span-1 flex flex-col">
+
+        {/* Holders */}
+        <div class="col-span-1">
           <div class="text-xs text-gray-400">Holders</div>
           <div class="text-sm mt-1">{props.token.gpHolderCount.toLocaleString()}</div>
         </div>
-        <div class="col-span-1 flex flex-col">
-          <div class="text-xs text-gray-400">Buy Tax</div>
-          <div class="text-sm mt-1">{props.token.gpBuyTax}%</div>
-        </div>
-        <div class="col-span-1 flex flex-col">
-          <div class="text-xs text-gray-400">Sell Tax</div>
-          <div class="text-sm mt-1">{props.token.gpSellTax}%</div>
+
+        {/* Buy/Sell Tax */}
+        <div class="col-span-2 flex items-center gap-4">
+          <div class="flex flex-col">
+            <div class="text-xs text-gray-400">Buy Tax</div>
+            <div class="text-sm mt-1">{props.token.gpBuyTax}%</div>
+          </div>
+          <div class="flex flex-col">
+            <div class="text-xs text-gray-400">Sell Tax</div>
+            <div class="text-sm mt-1">{props.token.gpSellTax}%</div>
+          </div>
         </div>
 
-        {/* Risk Level */}
-        <div class="col-span-2 flex justify-end">
-          <div class={`text-center px-3 py-1 rd-full text-xs fw-600 w-28 ${
+        {/* Risk Level - Rotated on the edge */}
+        <div class="absolute -right-[24px] top-1/2 -translate-y-1/2 origin-center -rotate-90">
+          <div class={`text-center px-3 py-1 rd-full text-xs fw-600 ${
             props.token.riskLevel === 'safe' ? 'bg-green-100 text-green-800 border border-green-200' :
             props.token.riskLevel === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
             'bg-red-100 text-red-800 border border-red-200'
@@ -939,6 +945,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                         token={token}
                         onClick={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                         trends={tokenTrends().get(token.tokenAddress)}
+                        history={tokenHistories().get(token.tokenAddress)}
                       />
                     </div>
                   ))}
