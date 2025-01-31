@@ -47,7 +47,8 @@ class DatabaseManager:
                 last_error TEXT,
                 token_data TEXT,  -- JSON field for basic token data
                 honeypot_data TEXT,  -- JSON field for honeypot analysis
-                goplus_data TEXT  -- JSON field for GoPlus analysis
+                goplus_data TEXT,  -- JSON field for GoPlus analysis
+                status TEXT DEFAULT 'new'
             )''')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_scan_timestamp ON scan_records(scan_timestamp)')
             db.commit()
@@ -72,8 +73,8 @@ class DatabaseManager:
             cursor.execute('''
                 INSERT OR REPLACE INTO scan_records 
                 (token_address, scan_timestamp, total_scans, honeypot_failures, 
-                token_data, honeypot_data, goplus_data)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                token_data, honeypot_data, goplus_data, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 result.token.address,
                 result.scan_timestamp,
@@ -81,7 +82,8 @@ class DatabaseManager:
                 result.honeypot_failures,
                 json.dumps(token_data),
                 json.dumps(result.honeypot_data),
-                json.dumps(result.goplus_data)
+                json.dumps(result.goplus_data),
+                'active'  # Always set status to active when updating
             ))
 
     def get_tokens_for_rescan(self, max_failures: int, max_scans: int, minutes_old: int = 1) -> List[Dict]:

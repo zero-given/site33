@@ -686,182 +686,185 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
   });
 
   return (
-    <div class="min-h-full">
-      <div class="sticky top-0 z-50 bg-black/20 backdrop-blur-sm border-b border-gray-800">
-        <div class="max-w-[1820px] mx-auto px-6 py-4">
-          {/* Top row with main controls */}
-          <div class="mb-4 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-              <div class="text-white text-lg fw-600">Token List</div>
-              <button
-                class="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rd text-white/90 transition-colors text-sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const currentTokens = filteredTokens();
-                  setExpandedTokens(prev => {
-                    const hasExpanded = currentTokens.some(token => prev.has(token.tokenAddress));
-                    return hasExpanded ? new Set<string>() : new Set(currentTokens.map(token => token.tokenAddress));
-                  });
-                }}
-              >
-                {expandedTokens().size > 0 ? (
-                  <>
-                    <List size={16} />
-                    <span>Collapse All</span>
-                  </>
-                ) : (
-                  <>
-                    <Layout size={16} />
-                    <span>Expand All</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={downloadLogs}
-                class="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 rd text-white/90 transition-colors text-sm"
-                title="Download debug logs"
-              >
-                Download Logs
-              </button>
-              <button
-                class={`flex items-center gap-2 px-4 py-2 rd text-white/90 transition-colors text-sm ${
-                  isDynamicScaling() ? 'bg-blue-600/50 hover:bg-blue-500/50' : 'bg-gray-800/50 hover:bg-gray-700/50'
-                }`}
-                onClick={() => setIsDynamicScaling(prev => !prev)}
-                title="Toggle dynamic chart scaling"
-              >
-                <Activity size={16} />
-                <span>Dynamic Scaling: {isDynamicScaling() ? 'On' : 'Off'}</span>
-              </button>
-              <input
-                type="text"
-                placeholder="Search tokens..."
-                class="max-w-[240px] px-3 py-2 bg-gray-800/50 rd border border-gray-700 text-white"
-                value={filters().searchQuery}
-                onInput={(e) => updateFilters(f => ({ ...f, searchQuery: e.currentTarget.value }))}
-              />
-              <select
-                class="max-w-[240px] px-3 py-2 bg-gray-800/50 rd border border-gray-700 text-white"
-                value={filters().sortBy}
-                onChange={(e) => updateFilters(f => ({ ...f, sortBy: e.currentTarget.value as any }))}
-              >
-                <option value="age">Sort by Age (Newest)</option>
-                <option value="age_asc">Sort by Age (Oldest)</option>
-                <option value="liquidity">Sort by Liquidity (Highest)</option>
-                <option value="liquidity_asc">Sort by Liquidity (Lowest)</option>
-                <option value="holders">Sort by Holders (Most)</option>
-                <option value="holders_asc">Sort by Holders (Least)</option>
-                <option value="safetyScore">Sort by Safety</option>
-              </select>
-            </div>
-            <div class="flex gap-8 text-white/90 items-center">
-              <span>Total tokens: {props.tokens.length}</span>
-              <span>Filtered: {filteredTokens().length}</span>
-              <span>Expanded: {expandedTokens().size}</span>
-              <div class="flex items-center gap-2 ml-4">
+    <div class="flex flex-col h-screen">
+      {/* Fixed Header Section */}
+      <div class="flex-none">
+        <div class="bg-black/20 backdrop-blur-sm border-b border-gray-800">
+          <div class="max-w-[1820px] mx-auto px-6 py-4">
+            {/* Top row with main controls */}
+            <div class="mb-4 flex justify-between items-center">
+              <div class="flex items-center gap-4">
+                <div class="text-white text-lg fw-600">Token List</div>
                 <button
-                  onClick={() => setViewMode('list')}
-                  class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'list' ? 'bg-gray-700/50' : ''}`}
-                  title="List View"
+                  class="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rd text-white/90 transition-colors text-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const currentTokens = filteredTokens();
+                    setExpandedTokens(prev => {
+                      const hasExpanded = currentTokens.some(token => prev.has(token.tokenAddress));
+                      return hasExpanded ? new Set<string>() : new Set(currentTokens.map(token => token.tokenAddress));
+                    });
+                  }}
                 >
-                  <List size={20} class="text-white" />
+                  {expandedTokens().size > 0 ? (
+                    <>
+                      <List size={16} />
+                      <span>Collapse All</span>
+                    </>
+                  ) : (
+                    <>
+                      <Layout size={16} />
+                      <span>Expand All</span>
+                    </>
+                  )}
                 </button>
                 <button
-                  onClick={() => setViewMode('grid')}
-                  class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'grid' ? 'bg-gray-700/50' : ''}`}
-                  title="Grid View"
+                  onClick={downloadLogs}
+                  class="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 rd text-white/90 transition-colors text-sm"
+                  title="Download debug logs"
                 >
-                  <LayoutGrid size={20} class="text-white" />
+                  Download Logs
                 </button>
                 <button
-                  onClick={() => setViewMode('chart')}
-                  class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'chart' ? 'bg-gray-700/50' : ''}`}
-                  title="Chart View"
+                  class={`flex items-center gap-2 px-4 py-2 rd text-white/90 transition-colors text-sm ${
+                    isDynamicScaling() ? 'bg-blue-600/50 hover:bg-blue-500/50' : 'bg-gray-800/50 hover:bg-gray-700/50'
+                  }`}
+                  onClick={() => setIsDynamicScaling(prev => !prev)}
+                  title="Toggle dynamic chart scaling"
                 >
-                  <LineChart size={20} class="text-white" />
+                  <Activity size={16} />
+                  <span>Dynamic Scaling: {isDynamicScaling() ? 'On' : 'Off'}</span>
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom row with filters */}
-          <div class="grid grid-cols-12 gap-4">
-            {/* Risk Level Filters and Min Filters - Spans 12 columns */}
-            <div class="col-span-12 flex items-center gap-3">
-              <div class="flex items-center space-x-1.5">
                 <input
-                  type="checkbox"
-                  id="hideHoneypots"
-                  checked={filters().hideHoneypots}
-                  onChange={(e) => updateFilters(f => ({ ...f, hideHoneypots: e.currentTarget.checked }))}
+                  type="text"
+                  placeholder="Search tokens..."
+                  class="max-w-[240px] px-3 py-2 bg-gray-800/50 rd border border-gray-700 text-white"
+                  value={filters().searchQuery}
+                  onInput={(e) => updateFilters(f => ({ ...f, searchQuery: e.currentTarget.value }))}
                 />
-                <label for="hideHoneypots" class="text-white/90 text-xs">Hide Honeypots</label>
+                <select
+                  class="max-w-[240px] px-3 py-2 bg-gray-800/50 rd border border-gray-700 text-white"
+                  value={filters().sortBy}
+                  onChange={(e) => updateFilters(f => ({ ...f, sortBy: e.currentTarget.value as any }))}
+                >
+                  <option value="age">Sort by Age (Newest)</option>
+                  <option value="age_asc">Sort by Age (Oldest)</option>
+                  <option value="liquidity">Sort by Liquidity (Highest)</option>
+                  <option value="liquidity_asc">Sort by Liquidity (Lowest)</option>
+                  <option value="holders">Sort by Holders (Most)</option>
+                  <option value="holders_asc">Sort by Holders (Least)</option>
+                  <option value="safetyScore">Sort by Safety</option>
+                </select>
               </div>
-
-              <div class="flex items-center space-x-1.5">
-                <input
-                  type="checkbox"
-                  id="hideWarning"
-                  checked={filters().hideWarning}
-                  onChange={(e) => updateFilters(f => ({ ...f, hideWarning: e.currentTarget.checked }))}
-                />
-                <label for="hideWarning" class="text-white/90 text-xs">Hide Warning</label>
-              </div>
-
-              <div class="flex items-center space-x-1.5">
-                <input
-                  type="checkbox"
-                  id="hideDanger"
-                  checked={filters().hideDanger}
-                  onChange={(e) => updateFilters(f => ({ ...f, hideDanger: e.currentTarget.checked }))}
-                />
-                <label for="hideDanger" class="text-white/90 text-xs">Hide Danger</label>
-              </div>
-
-              <div class="flex items-center space-x-1.5">
-                <input
-                  type="checkbox"
-                  id="hideNotRenounced"
-                  checked={filters().hideNotRenounced}
-                  onChange={(e) => updateFilters(f => ({ ...f, hideNotRenounced: e.currentTarget.checked }))}
-                />
-                <label for="hideNotRenounced" class="text-white/90 text-xs">Hide Not Renounced</label>
-              </div>
-
-              <div class="flex items-center space-x-1.5">
-                <input
-                  type="checkbox"
-                  id="hideUnlockedLiquidity"
-                  checked={filters().hideUnlockedLiquidity}
-                  onChange={(e) => updateFilters(f => ({ ...f, hideUnlockedLiquidity: e.currentTarget.checked }))}
-                />
-                <label for="hideUnlockedLiquidity" class="text-white/90 text-xs">Hide Unlocked Liquidity</label>
-              </div>
-
-              <div class="h-4 w-px bg-gray-700"></div>
-
-              <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1.5">
-                  <label for="minHolders" class="text-white/90 text-xs">Min Holders:</label>
-                  <input
-                    id="minHolders"
-                    type="number"
-                    placeholder="0"
-                    class="w-20 px-2 py-1 bg-gray-800/50 rd border border-gray-700 text-white text-sm"
-                    value={filters().minHolders}
-                    onInput={(e) => updateFilters(f => ({ ...f, minHolders: parseInt(e.currentTarget.value) || 0 }))}
-                  />
+              <div class="flex gap-8 text-white/90 items-center">
+                <span>Total tokens: {props.tokens.length}</span>
+                <span>Filtered: {filteredTokens().length}</span>
+                <span>Expanded: {expandedTokens().size}</span>
+                <div class="flex items-center gap-2 ml-4">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'list' ? 'bg-gray-700/50' : ''}`}
+                    title="List View"
+                  >
+                    <List size={20} class="text-white" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'grid' ? 'bg-gray-700/50' : ''}`}
+                    title="Grid View"
+                  >
+                    <LayoutGrid size={20} class="text-white" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('chart')}
+                    class={`p-2 rd hover:bg-gray-700/50 ${viewMode() === 'chart' ? 'bg-gray-700/50' : ''}`}
+                    title="Chart View"
+                  >
+                    <LineChart size={20} class="text-white" />
+                  </button>
                 </div>
-                <div class="flex items-center gap-1.5">
-                  <label for="minLiquidity" class="text-white/90 text-xs">Min Liquidity ($):</label>
+              </div>
+            </div>
+
+            {/* Bottom row with filters */}
+            <div class="grid grid-cols-12 gap-4">
+              {/* Risk Level Filters and Min Filters - Spans 12 columns */}
+              <div class="col-span-12 flex items-center gap-3">
+                <div class="flex items-center space-x-1.5">
                   <input
-                    id="minLiquidity"
-                    type="number"
-                    placeholder="0"
-                    class="w-20 px-2 py-1 bg-gray-800/50 rd border border-gray-700 text-white text-sm"
-                    value={filters().minLiquidity}
-                    onInput={(e) => updateFilters(f => ({ ...f, minLiquidity: parseInt(e.currentTarget.value) || 0 }))}
+                    type="checkbox"
+                    id="hideHoneypots"
+                    checked={filters().hideHoneypots}
+                    onChange={(e) => updateFilters(f => ({ ...f, hideHoneypots: e.currentTarget.checked }))}
                   />
+                  <label for="hideHoneypots" class="text-white/90 text-xs">Hide Honeypots</label>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <input
+                    type="checkbox"
+                    id="hideWarning"
+                    checked={filters().hideWarning}
+                    onChange={(e) => updateFilters(f => ({ ...f, hideWarning: e.currentTarget.checked }))}
+                  />
+                  <label for="hideWarning" class="text-white/90 text-xs">Hide Warning</label>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <input
+                    type="checkbox"
+                    id="hideDanger"
+                    checked={filters().hideDanger}
+                    onChange={(e) => updateFilters(f => ({ ...f, hideDanger: e.currentTarget.checked }))}
+                  />
+                  <label for="hideDanger" class="text-white/90 text-xs">Hide Danger</label>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <input
+                    type="checkbox"
+                    id="hideNotRenounced"
+                    checked={filters().hideNotRenounced}
+                    onChange={(e) => updateFilters(f => ({ ...f, hideNotRenounced: e.currentTarget.checked }))}
+                  />
+                  <label for="hideNotRenounced" class="text-white/90 text-xs">Hide Not Renounced</label>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <input
+                    type="checkbox"
+                    id="hideUnlockedLiquidity"
+                    checked={filters().hideUnlockedLiquidity}
+                    onChange={(e) => updateFilters(f => ({ ...f, hideUnlockedLiquidity: e.currentTarget.checked }))}
+                  />
+                  <label for="hideUnlockedLiquidity" class="text-white/90 text-xs">Hide Unlocked Liquidity</label>
+                </div>
+
+                <div class="h-4 w-px bg-gray-700"></div>
+
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1.5">
+                    <label for="minHolders" class="text-white/90 text-xs">Min Holders:</label>
+                    <input
+                      id="minHolders"
+                      type="number"
+                      placeholder="0"
+                      class="w-20 px-2 py-1 bg-gray-800/50 rd border border-gray-700 text-white text-sm"
+                      value={filters().minHolders}
+                      onInput={(e) => updateFilters(f => ({ ...f, minHolders: parseInt(e.currentTarget.value) || 0 }))}
+                    />
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <label for="minLiquidity" class="text-white/90 text-xs">Min Liquidity ($):</label>
+                    <input
+                      id="minLiquidity"
+                      type="number"
+                      placeholder="0"
+                      class="w-20 px-2 py-1 bg-gray-800/50 rd border border-gray-700 text-white text-sm"
+                      value={filters().minLiquidity}
+                      onInput={(e) => updateFilters(f => ({ ...f, minLiquidity: parseInt(e.currentTarget.value) || 0 }))}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -869,11 +872,8 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
         </div>
       </div>
 
-      {/* List Container */}
-      <div 
-        ref={scrollContainerRef}
-        class="flex-1 overflow-auto"
-      >
+      {/* Scrollable Content Section */}
+      <div class="flex-1 overflow-auto" ref={scrollContainerRef}>
         <div class={`mx-auto px-6 pt-6 transition-all duration-300 ${
           viewMode() === 'grid' && expandedTokens().size > 0 
             ? 'max-w-[3600px] w-[90vw]' 
@@ -935,7 +935,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                 </div>
               ) : (
                 // Show grid of tiles
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-[repeat(auto-fit,minmax(500px,1fr))] gap-4">
                   {filteredTokens().map((token, index) => (
                     <div
                       data-index={index}
@@ -946,6 +946,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                         onClick={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                         trends={tokenTrends().get(token.tokenAddress)}
                         history={tokenHistories().get(token.tokenAddress)}
+                        dynamicScaling={isDynamicScaling()}
                       />
                     </div>
                   ))}

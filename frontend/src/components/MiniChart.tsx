@@ -1,4 +1,4 @@
-import { Component, createMemo, onMount, onCleanup } from 'solid-js';
+import { Component, createMemo, onMount, onCleanup, createEffect } from 'solid-js';
 import {
   Chart as ChartJS,
   LinearScale,
@@ -27,11 +27,16 @@ interface MiniChartProps {
   history: TokenHistory[];
   type: 'liquidity' | 'holders';
   class?: string;
+  dynamicScaling?: boolean;
 }
 
 export const MiniChart: Component<MiniChartProps> = (props) => {
   let chartContainer: HTMLDivElement | undefined;
   let chart: ChartJS | undefined;
+
+  // Constants for dynamic scaling
+  const MIN_RANGE_PERCENT = 0.1;
+  const PADDING_PERCENT = 0.2;
 
   // Memoize data processing
   const dataMemo = createMemo(() => {
@@ -72,6 +77,32 @@ export const MiniChart: Component<MiniChartProps> = (props) => {
     };
   });
 
+  // Calculate dynamic bounds
+  const getDynamicBounds = (data: { x: number; y: number }[]) => {
+    if (!data.length) return { min: 0, max: 0 };
+
+    const values = data.map(d => d.y);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min;
+    const midpoint = (max + min) / 2;
+
+    // Ensure minimum range and add padding
+    const minRange = Math.max(
+      range,
+      max * MIN_RANGE_PERCENT,
+      Math.abs(midpoint) * 0.2 // Minimum 20% of midpoint value
+    );
+    
+    const paddedRange = minRange * (1 + PADDING_PERCENT * 2);
+    const halfRange = paddedRange / 2;
+
+    return {
+      min: midpoint - halfRange,
+      max: midpoint + halfRange
+    };
+  };
+
   const createOrUpdateChart = () => {
     try {
       if (!chartContainer) return;
@@ -82,6 +113,14 @@ export const MiniChart: Component<MiniChartProps> = (props) => {
 
       const data = dataMemo();
       if (!data.length) return;
+
+      // Calculate bounds based on scaling mode
+      const bounds = props.dynamicScaling ? 
+        getDynamicBounds(data) : 
+        {
+          min: Math.min(...data.map(d => d.y)) * 0.95,
+          max: Math.max(...data.map(d => d.y)) * 1.05
+        };
 
       // Destroy existing chart
       if (chart) {
@@ -130,8 +169,9 @@ export const MiniChart: Component<MiniChartProps> = (props) => {
             },
             y: {
               display: false,
-              min: Math.min(...data.map(d => d.y)) * 0.95,
-              max: Math.max(...data.map(d => d.y)) * 1.05
+              min: bounds.min,
+              max: bounds.max,
+              grace: props.dynamicScaling ? '10%' : undefined
             }
           }
         }
@@ -140,6 +180,18 @@ export const MiniChart: Component<MiniChartProps> = (props) => {
       console.error('[MiniChart] Error creating chart:', err);
     }
   };
+
+  // Add effect to watch for dynamic scaling changes
+  createEffect(() => {
+    // Access the dynamicScaling prop to track changes
+    const isDynamicScaling = props.dynamicScaling;
+    console.debug('[MiniChart] Dynamic scaling changed:', isDynamicScaling);
+    
+    // Recreate the chart when dynamic scaling changes
+    if (chart) {
+      createOrUpdateChart();
+    }
+  });
 
   onMount(() => {
     createOrUpdateChart();
