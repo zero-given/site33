@@ -461,13 +461,13 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
   });
 
   // Modify CompactRow to use the stored trends instead of calculating them
-  const CompactRow: Component<{ token: Token }> = (props) => {
+  const CompactRow: Component<{ token: Token, showDebugBorders: boolean }> = (props) => {
     const trends = () => tokenTrends().get(props.token.tokenAddress) || { liquidity: 'stagnant', holders: 'stagnant' };
     
     return (
       <div 
         onClick={(e) => handleTokenClick(props.token.tokenAddress, e)}
-        class="w-full bg-black/20 backdrop-blur-sm rd-lg border border-gray-700/50 hover:border-gray-600/50 transition-all duration-200 px-4 py-3 grid grid-cols-12 gap-6 items-center text-white cursor-pointer relative"
+        class={`w-full bg-black/20 backdrop-blur-sm rd-lg border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 px-4 py-3 grid grid-cols-12 gap-6 items-center text-white cursor-pointer relative ${props.showDebugBorders ? 'border border-white/20' : 'border border-white/0'}`}
       >
         {/* Name and Symbol */}
         <div class="col-span-2">
@@ -574,8 +574,8 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
         </div>
 
         {/* Risk Level - Rotated on the edge */}
-        <div class="absolute -right-[24px] top-1/2 -translate-y-1/2 origin-center -rotate-90">
-          <div class={`text-center px-3 py-1 rd-full text-xs fw-600 ${
+        <div class="absolute -right-[24px] top-1/2 -translate-y-1/2 origin-center -rotate-90 flex items-center justify-center">
+          <div class={`h-[28px] w-[75px] flex items-center justify-center text-center px-2 py-1 rd-full text-xs fw-600 ${
             props.token.riskLevel === 'safe' ? 'bg-green-100 text-green-800 border border-green-200' :
             props.token.riskLevel === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
             'bg-red-100 text-red-800 border border-red-200'
@@ -920,9 +920,10 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                         onToggleExpand={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                         trends={tokenTrends().get(token.tokenAddress)}
                         dynamicScaling={isDynamicScaling()}
+                        showDebugBorders={props.showDebugBorders}
                       />
                     ) : (
-                      <CompactRow token={token} />
+                      <CompactRow token={token} showDebugBorders={props.showDebugBorders} />
                     )}
                   </div>
                 );
@@ -948,6 +949,7 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                           onToggleExpand={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                           trends={tokenTrends().get(token.tokenAddress)}
                           dynamicScaling={isDynamicScaling()}
+                          showDebugBorders={props.showDebugBorders}
                         />
                       </div>
                     ) : null;
@@ -983,9 +985,9 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                   ref={(el) => virtualizer()?.measureElement(el)}
                   class={`${
                     index % 2 === 0 ? 'bg-black/20' : 'bg-black/10'
-                  } transition-colors hover:bg-black/30 p-2`}
+                  } transition-colors hover:bg-black/30 p-2 ${props.showDebugBorders ? 'border border-white/20' : ''}`}
                 >
-                  <div class="flex items-center gap-3">
+                  <div class={`flex items-center gap-3 ${props.showDebugBorders ? 'border border-white/20' : ''}`}>
                     {/* Name, Symbol and Price */}
                     <div class="w-[200px]">
                       <h3 class="text-sm fw-600 text-white truncate" title={token.tokenName}>

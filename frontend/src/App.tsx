@@ -186,17 +186,16 @@ const App: Component = () => {
   
   return (
     <div 
-      class="min-h-screen flex flex-col overflow-hidden"
+      class={`min-h-screen flex flex-col overflow-hidden ${showDebugBorders() ? 'border border-white/20' : ''}`}
       style={{
         'background-color': bgColor(),
-        'background-attachment': 'fixed',
-        'padding-top': 'env(safe-area-inset-top)',
-        'padding-bottom': 'env(safe-area-inset-bottom)'
+        '--app-bg-color': bgColor()
       }}
     >
-      <div class="px-2 sm:px-4">
-        <LiveStatusBar
-          isConnected={isConnected()}
+      {/* Status bar container - no padding */}
+      <div class={`w-screen ${showDebugBorders() ? 'border border-white/20' : ''}`}>
+        <LiveStatusBar 
+          isConnected={isConnected()} 
           isLoading={isLoading()}
           error={connectionError()}
           metrics={performanceMetrics()}
@@ -208,43 +207,37 @@ const App: Component = () => {
         />
       </div>
       
-      <main class="flex-1 overflow-auto relative w-full pt-[56px] xs:pt-[64px]">
-        <div class="flex">
-          {/* Left sidebar area with responsive padding */}
-          <Show when={!isMobile()}>
-            <div class="w-[350px] flex justify-center px-4">
-              <BuyProfilesWidget />
-            </div>
-          </Show>
-          
-          {/* Main content area */}
-          <div class="flex-1">
-            <Show
-              when={!isLoading() && hasReceivedInitialTokens()}
-              fallback={
-                <div class="flex items-center justify-center h-full">
-                  <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500" />
-                </div>
-              }
-            >
-              <TokenEventsList
-                tokens={Object.values(tokens.items)}
-                onColorsChange={setColors}
-                showDebugBorders={showDebugBorders()}
-              />
-            </Show>
+      {/* Main content with padding */}
+      <main class={`flex-1 flex gap-4 p-4 overflow-hidden ${showDebugBorders() ? 'border border-white/20' : ''}`}>
+        {/* Left sidebar area with responsive padding */}
+        <Show when={!isMobile()}>
+          <div class={`self-start sticky top-0 ml-4 ${showDebugBorders() ? 'border border-white/20' : ''}`}>
+            <BuyProfilesWidget 
+              class={`w-[280px] bg-black/40 rd-lg backdrop-blur-sm p-3 shadow-lg ${
+                showDebugBorders() ? 'border border-white/20' : 'border border-blue-500/50'
+              }`}
+            />
           </div>
+        </Show>
+        
+        {/* Main content area */}
+        <div class={`flex-1 flex flex-col overflow-hidden ${showDebugBorders() ? 'border border-white/20' : ''}`}>
+          <Show
+            when={!isLoading() && hasReceivedInitialTokens()}
+            fallback={
+              <div class={`flex items-center justify-center h-full ${showDebugBorders() ? 'border border-white/20' : ''}`}>
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500" />
+              </div>
+            }
+          >
+            <TokenEventsList
+              tokens={Object.values(tokens.items)}
+              onColorsChange={setColors}
+              showDebugBorders={showDebugBorders()}
+            />
+          </Show>
         </div>
       </main>
-      
-      {/* Debug panel in development */}
-      {import.meta.env.DEV && (
-        <div class="fixed bottom-20 right-4 bg-black/80 p-2 rd z-50">
-          <div class="text-xs text-white">
-            {isMobile() ? 'Mobile View' : 'Desktop View'}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

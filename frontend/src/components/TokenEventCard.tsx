@@ -67,6 +67,7 @@ interface TokenCardProps {
     holders: 'up' | 'down' | 'stagnant';
   };
   dynamicScaling?: boolean;
+  showDebugBorders?: boolean;
 }
 
 export const TokenEventCard: Component<TokenCardProps> = (props) => {
@@ -233,9 +234,12 @@ export const TokenEventCard: Component<TokenCardProps> = (props) => {
 
   const warningReasons = getWarningReasons();
 
+  const getBorderClass = () => props.showDebugBorders ? 'border border-white/20' : 'border border-white/0';
+
   return (
     <div 
-      class={`w-full transition-all duration-200 relative bg-black/20 backdrop-blur-sm rd-lg border border-gray-700/50 hover:border-gray-600/50 overflow-hidden`}
+      onClick={(e) => props.onToggleExpand(e)}
+      class={`w-full bg-black/20 hover:bg-black/40 backdrop-blur-sm rd-lg border border-gray-700/50 hover:border-gray-600/50 overflow-hidden cursor-pointer transition-all duration-200 ${getBorderClass()}`}
     >
       <div class={`min-h-[84px] ${props.expanded ? '' : ''} transition-all duration-200`}>
         <Show
