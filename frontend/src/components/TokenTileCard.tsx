@@ -71,13 +71,10 @@ export const TokenTileCard: Component<TokenTileCardProps> = (props) => {
           {/* Right side: Price, Risk level, and Age */}
           <div class="flex items-center gap-3 shrink-0">
             <TokenPrice token={props.token} class="!text-sm" showBothFormats={true} />
-            <div class="w-[90px] h-[28px] flex items-center justify-center text-center px-2.5 py-1.5 rd text-xs bg-gray-800/50 border border-gray-700/50 text-white">
+            <div class="w-[75px] h-[28px] flex-shrink-0 flex items-center justify-center text-center px-2.5 py-1.5 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30">
               {props.token.gpBuyTax}% / {props.token.gpSellTax}%
             </div>
-            <span class={`w-[90px] h-[28px] flex items-center justify-center text-center px-2.5 py-1.5 rd text-xs ${securityStatus[props.token.riskLevel]}`}>
-              {props.token.hpIsHoneypot ? 'HONEYPOT' : props.token.riskLevel.toUpperCase()}
-            </span>
-            <span class="w-[90px] h-[28px] flex items-center justify-center text-center px-2.5 py-1.5 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30">
+            <span class="w-[75px] h-[28px] flex-shrink-0 flex items-center justify-center text-center px-2.5 py-1.5 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30">
               {(() => {
                 const totalMinutes = Math.round(props.token.tokenAgeHours * 60);
                 const hours = Math.floor(totalMinutes / 60);
@@ -87,6 +84,9 @@ export const TokenTileCard: Component<TokenTileCardProps> = (props) => {
                 }
                 return `${minutes}m`;
               })()}
+            </span>
+            <span class={`w-[75px] h-[28px] flex-shrink-0 flex items-center justify-center text-center px-2.5 py-1.5 rd text-xs ${securityStatus[props.token.riskLevel]}`}>
+              {props.token.hpIsHoneypot ? 'HONEYPOT' : props.token.riskLevel.toUpperCase()}
             </span>
           </div>
         </div>
