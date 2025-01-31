@@ -15,6 +15,7 @@ const wsWorker = new Worker(
 
 const DEFAULT_BG_COLOR = '#1a1a1a';
 const BG_COLOR_STORAGE_KEY = 'app_bg_color';
+const DEBUG_BORDERS_STORAGE_KEY = 'debug_borders_enabled';
 
 const App: Component = () => {
   // State management using solid-js primitives
@@ -26,6 +27,9 @@ const App: Component = () => {
   
   // Load saved background color or use default
   const [bgColor, setBgColor] = createSignal(localStorage.getItem(BG_COLOR_STORAGE_KEY) || DEFAULT_BG_COLOR);
+  
+  // Debug borders state with persistence
+  const [showDebugBorders, setShowDebugBorders] = createSignal(localStorage.getItem(DEBUG_BORDERS_STORAGE_KEY) === 'true');
 
   // Save background color to localStorage when it changes
   createEffect(() => {
@@ -33,8 +37,18 @@ const App: Component = () => {
     localStorage.setItem(BG_COLOR_STORAGE_KEY, color);
   });
 
+  // Save debug borders state to localStorage when it changes
+  createEffect(() => {
+    const debugBorders = showDebugBorders();
+    localStorage.setItem(DEBUG_BORDERS_STORAGE_KEY, debugBorders.toString());
+  });
+
   const resetBgColor = () => {
     setBgColor(DEFAULT_BG_COLOR);
+  };
+
+  const toggleDebugBorders = () => {
+    setShowDebugBorders(prev => !prev);
   };
 
   // Performance metrics state
@@ -189,6 +203,8 @@ const App: Component = () => {
           onBgColorChange={setBgColor}
           onResetBgColor={resetBgColor}
           currentBgColor={bgColor()}
+          showDebugBorders={showDebugBorders()}
+          onToggleDebugBorders={toggleDebugBorders}
         />
       </div>
       
@@ -214,6 +230,7 @@ const App: Component = () => {
               <TokenEventsList
                 tokens={Object.values(tokens.items)}
                 onColorsChange={setColors}
+                showDebugBorders={showDebugBorders()}
               />
             </Show>
           </div>

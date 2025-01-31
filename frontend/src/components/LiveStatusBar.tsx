@@ -9,6 +9,8 @@ interface LiveStatusBarProps {
   onBgColorChange: (color: string) => void;
   onResetBgColor: () => void;
   currentBgColor: string;
+  showDebugBorders: boolean;
+  onToggleDebugBorders: () => void;
 }
 
 export const LiveStatusBar: Component<LiveStatusBarProps> = (props) => {
@@ -52,6 +54,17 @@ export const LiveStatusBar: Component<LiveStatusBarProps> = (props) => {
             title="Reset background color"
           >
             Reset
+          </button>
+          <button
+            onClick={props.onToggleDebugBorders}
+            class={`text-xs px-2 py-1 rd transition-colors ${
+              props.showDebugBorders 
+                ? 'bg-blue-500/50 hover:bg-blue-500/70' 
+                : 'bg-gray-700/50 hover:bg-gray-700'
+            }`}
+            title="Toggle debug borders"
+          >
+            Borders
           </button>
         </div>
       </div>

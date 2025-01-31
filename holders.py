@@ -2,38 +2,65 @@ from web3 import Web3
 import requests
 from bs4 import BeautifulSoup
 
-# Connect to Ethereum via public RPC node
 w3 = Web3(Web3.HTTPProvider('https://eth.llamarpc.com'))
 
 def get_holders_etherscan(token_address):
-    """Direct holder count from Etherscan with atomic selector"""
+    """Direct holder count from Etherscan with corrected selector"""
     try:
         url = f"https://etherscan.io/token/{token_address}"
         response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Atomic selector for holder count
-        holders = soup.select_one('a[href*="tokenholdings"] div').text
-        return int(holders.replace(',', ''))
+        # Target the correct anchor element for holders
+        holder_element = soup.select_one('a[href*="token-holders"]')
+        if holder_element:
+            holders = holder_element.text.strip().replace(',', '')
+            return int(holders)
+        else:
+            print("Etherscan Error: Holder element not found")
+            return None
     except Exception as e:
         print(f"Etherscan Error: {str(e)[:80]}")
         return None
 
 def get_holders_onchain(token_address):
-    """Get holders through ERC-20 contract interaction"""
+    """On-chain interaction with corrected ABI and example address"""
     try:
+        erc20_abi = [
+            {
+                "constant": True,
+                "inputs": [],
+                "name": "totalSupply",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "payable": False,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": True,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "payable": False,
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ]
         contract = w3.eth.contract(
             address=Web3.to_checksum_address(token_address),
-            abi=['function totalSupply() view returns (uint256)',
-                 'function balanceOf(address) view returns (uint256)']
+            abi=erc20_abi
         )
         
-        # Get total supply and first holder balance
         total_supply = contract.functions.totalSupply().call()
-        first_holder = contract.functions.balanceOf(w3.eth.accounts[0]).call()
+        # Use a dummy address (e.g., zero address)
+        dummy_address = '0x0000000000000000000000000000000000000000'
+        balance = contract.functions.balanceOf(dummy_address).call()
         
-        # Estimate holders (approximation for new tokens)
-        return int(total_supply / (first_holder or 1))
+        # Example estimation logic (for demonstration only)
+        if balance > 0:
+            return total_supply // balance
+        else:
+            return 0  # Avoid division by zero
     except Exception as e:
         print(f"Blockchain Error: {str(e)[:80]}")
         return None

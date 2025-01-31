@@ -2,20 +2,31 @@ import { Component, createSignal, createMemo, onMount, createEffect, onCleanup }
 import { createVirtualizer, type VirtualItem, type Virtualizer } from '@tanstack/solid-virtual';
 import { TokenEventCard } from './TokenEventCard';
 import { TokenTileCard } from './TokenTileCard';
-import { Layout, List, LineChart, Activity, LayoutGrid } from 'lucide-solid';
+import { Layout, List, LineChart, Activity, LayoutGrid, Key, Lock, ChevronDown } from 'lucide-solid';
 import { TrendBadge } from './TrendBadge';
 import type { Token, FilterState, ThemeColors } from '../types';
 import { TokenPrice } from './TokenPrice';
+import { MiniChart } from './MiniChart';
+
+const securityStatus = {
+  safe: 'bg-green-100 text-green-800 border border-green-200',
+  warning: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+  danger: 'bg-red-100 text-red-800 border border-red-200'
+} as const;
 
 interface TokenEventsListProps {
   tokens: Token[];
   onColorsChange: (colors: ThemeColors) => void;
+  showDebugBorders: boolean;
 }
 
 type SortField = 'age' | 'holders' | 'liquidity' | 'safetyScore';
 
 const STORAGE_KEY = 'tokenListFilters';
 const DYNAMIC_SCALING_KEY = 'chartDynamicScaling';
+const VIEW_MODE_STORAGE_KEY = 'token_list_view_mode';
+
+type ViewMode = 'list' | 'grid' | 'chart';
 
 const getRiskScore = (token: Token): number => {
   switch (token.riskLevel) {
@@ -675,7 +686,16 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
     localStorage.setItem(DYNAMIC_SCALING_KEY, isDynamicScaling().toString());
   });
 
-  const [viewMode, setViewMode] = createSignal<'list' | 'grid' | 'chart'>('list');
+  // Initialize view mode from localStorage or default to 'list'
+  const [viewMode, setViewMode] = createSignal<ViewMode>(
+    (localStorage.getItem(VIEW_MODE_STORAGE_KEY) as ViewMode) || 'list'
+  );
+
+  // Save view mode when it changes
+  createEffect(() => {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode());
+  });
+
   const [isMobile, setIsMobile] = createSignal(window.innerWidth < 768);
 
   // Add resize handler
@@ -945,8 +965,9 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                         token={token}
                         onClick={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
                         trends={tokenTrends().get(token.tokenAddress)}
-                        history={tokenHistories().get(token.tokenAddress)}
+                        history={tokenHistories().get(token.tokenAddress) || []}
                         dynamicScaling={isDynamicScaling()}
+                        showDebugBorders={props.showDebugBorders}
                       />
                     </div>
                   ))}
@@ -962,15 +983,156 @@ export const TokenEventsList: Component<TokenEventsListProps> = (props) => {
                   ref={(el) => virtualizer()?.measureElement(el)}
                   class={`${
                     index % 2 === 0 ? 'bg-black/20' : 'bg-black/10'
-                  } transition-colors hover:bg-black/30`}
+                  } transition-colors hover:bg-black/30 p-2`}
                 >
-                  <TokenEventCard
-                    token={token}
-                    expanded={expandedTokens().has(token.tokenAddress)}
-                    onToggleExpand={(e: MouseEvent) => handleTokenClick(token.tokenAddress, e)}
-                    trends={tokenTrends().get(token.tokenAddress)}
-                    dynamicScaling={isDynamicScaling()}
-                  />
+                  <div class="flex items-center gap-3">
+                    {/* Name, Symbol and Price */}
+                    <div class="w-[200px]">
+                      <h3 class="text-sm fw-600 text-white truncate" title={token.tokenName}>
+                        {token.tokenName}
+                      </h3>
+                      <p class="text-xs text-gray-400 truncate">
+                        {token.tokenSymbol}
+                      </p>
+                      <div class="mt-0.5">
+                        <TokenPrice token={token} showBothFormats={true} class="!text-xs" />
+                      </div>
+                    </div>
+
+                    {/* Status Boxes */}
+                    <div class="flex items-center gap-2 shrink-0">
+                      <div class="w-[60px] h-[24px] flex-shrink-0 flex items-center justify-center text-center px-2 py-1 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30">
+                        {Math.round(token.gpBuyTax)}% / {Math.round(token.gpSellTax)}%
+                      </div>
+                      <span class="w-[60px] h-[24px] flex-shrink-0 flex items-center justify-center text-center px-2 py-1 rd text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30">
+                        {(() => {
+                          const totalMinutes = Math.round(token.tokenAgeHours * 60);
+                          const hours = Math.floor(totalMinutes / 60);
+                          const minutes = totalMinutes % 60;
+                          if (hours > 0) {
+                            return `${hours}h ${minutes}m`;
+                          }
+                          return `${minutes}m`;
+                        })()}
+                      </span>
+                      <span class={`w-[60px] h-[24px] flex-shrink-0 flex items-center justify-center text-center px-2 py-1 rd text-xs ${securityStatus[token.riskLevel]}`}>
+                        {token.hpIsHoneypot ? 'HONEYPOT' : token.riskLevel.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Charts */}
+                    <div class="flex gap-3 w-[300px]">
+                      {/* Holders Chart */}
+                      <div class="flex-1 bg-black/10 p-1.5 rd">
+                        <div class="flex justify-between items-center mb-1">
+                          <p class="text-gray-400 text-xs">Holders</p>
+                          <p class="text-white fw-600 text-xs">{token.gpHolderCount.toLocaleString()}</p>
+                        </div>
+                        {tokenHistories().get(token.tokenAddress) && (
+                          <MiniChart
+                            token={token}
+                            history={tokenHistories().get(token.tokenAddress) || []}
+                            type="holders"
+                            dynamicScaling={isDynamicScaling()}
+                          />
+                        )}
+                      </div>
+
+                      {/* Liquidity Chart */}
+                      <div class="flex-1 bg-black/10 p-1.5 rd">
+                        <div class="flex justify-between items-center mb-1">
+                          <p class="text-gray-400 text-xs">Liquidity</p>
+                          <p class="text-white fw-600 text-xs">${token.hpLiquidityAmount.toLocaleString()}</p>
+                        </div>
+                        {tokenHistories().get(token.tokenAddress) && (
+                          <MiniChart
+                            token={token}
+                            history={tokenHistories().get(token.tokenAddress) || []}
+                            type="liquidity"
+                            dynamicScaling={isDynamicScaling()}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status Info */}
+                    <div class="w-[400px] flex items-start gap-2">
+                      <div class="flex-1">
+                        <p class={`w-full fw-600 flex items-center gap-1 px-1.5 py-0.5 rd text-xs ${
+                          token.gpOwnerAddress === '0x0000000000000000000000000000000000000000'
+                            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                            : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        }`}>
+                          <Key size={12} class="text-current" />
+                          {token.gpOwnerAddress === '0x0000000000000000000000000000000000000000' ? 'Renounced' : 'Owned'}
+                        </p>
+                        {(() => {
+                          try {
+                            const lpHolders = JSON.parse(token.gpLpHolders || '[]');
+                            return lpHolders.slice(0, 2).map((holder: any) => (
+                              <p class="text-gray-300 text-xs flex items-center gap-1 mt-1">
+                                <span class="shrink-0 text-white">{(Number(holder.percent) * 100).toFixed(2)}%</span>
+                                <span class="truncate opacity-60 max-w-[100px]">{holder.tag || holder.address}</span>
+                                {holder.is_locked && <Lock size={10} class="shrink-0" />}
+                              </p>
+                            ));
+                          } catch {
+                            return null;
+                          }
+                        })()}
+                      </div>
+                      <div class="flex-1">
+                        <p class={`w-full text-xs fw-600 flex items-center gap-1 px-1.5 py-0.5 rd ${(() => {
+                          try {
+                            const lpHolders = JSON.parse(token.gpLpHolders || '[]');
+                            const totalLocked = lpHolders.reduce((acc: number, holder: any) => 
+                              acc + (holder.is_locked ? Number(holder.percent) * 100 : 0), 0
+                            );
+                            return totalLocked > 90 
+                              ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                              : totalLocked > 50 
+                              ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' 
+                              : 'bg-red-500/20 text-red-300 border border-red-500/30';
+                          } catch {
+                            return 'bg-red-500/20 text-red-300 border border-red-500/30';
+                          }
+                        })()}`}>
+                          <Lock size={12} />
+                          {(() => {
+                            try {
+                              const lpHolders = JSON.parse(token.gpLpHolders || '[]');
+                              const totalLocked = lpHolders.reduce((acc: number, holder: any) => 
+                                acc + (holder.is_locked ? Number(holder.percent) * 100 : 0), 0
+                              );
+                              return `${totalLocked.toFixed(1)}% Locked`;
+                            } catch {
+                              return 'Not Locked';
+                            }
+                          })()}
+                        </p>
+                        {(() => {
+                          try {
+                            const dexInfo = JSON.parse(token.gpDexInfo || '[]');
+                            return dexInfo.slice(0, 1).map((dex: any) => (
+                              <p class="text-white text-xs mt-1">
+                                {dex.name}: ${Number(dex.liquidity).toLocaleString()}
+                              </p>
+                            ));
+                          } catch {
+                            return null;
+                          }
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Expand Button */}
+                    <button 
+                      onClick={(e) => handleTokenClick(token.tokenAddress, e)}
+                      class="w-6 h-6 flex items-center justify-center hover:bg-white/10 rd transition-colors"
+                    >
+                      <ChevronDown size={16} class="text-gray-400" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
